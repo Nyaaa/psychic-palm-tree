@@ -3,20 +3,10 @@ from termcolor import colored
 import numpy as np
 
 spaces = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-
-
 score = {
     "playerX": [],
     "playerO": []
 }
-
-
-def board():
-    print(spaces[0], "|", spaces[1], "|", spaces[2])
-    print(spaces[3], "|", spaces[4], "|", spaces[5])
-    print(spaces[6], "|", spaces[7], "|", spaces[8])
-
-
 win_conditions = (
     (1, 2, 3),
     (4, 5, 6),
@@ -27,6 +17,13 @@ win_conditions = (
     (1, 5, 9),
     (3, 5, 7)
 )
+
+
+def board(message=""):
+    num = np.array(spaces)
+    reshaped = num.reshape(3, 3)
+    termtables.print(reshaped)
+    print(message)
 
 
 def win_check(player_name):
@@ -46,15 +43,24 @@ def player(step):
 def start():
     step = 0
     while True:
-        num = np.array(spaces)
-        reshaped = num.reshape(3, 3)
-        termtables.print(reshaped)
-
         player_sym = player(step)[0]
         player_name = player(step)[1]
-        print(f"Player: ( {player_sym} )")
-        play = int(input("Enter 1-9 to play, 0 to exit: "))
+        board(f"Player: ( {player_sym} )")
+
+        if step == 9:
+            board("Game over!")
+            break
+
+        play = input("Enter 1-9 to play, 0 to exit: ")
+
+        try:
+            play = int(play)
+        except ValueError:
+            print("Enter a number")
+            continue
+
         if play == 0:
+            board("Game over!")
             break
         else:
             if play in spaces:
@@ -67,8 +73,9 @@ def start():
                 print("Illegal move, select a different space")
                 continue
         step += 1
+
         if win_check(player_name):
-            print("Winner: ", player_name)
+            board(f"Winner: ( {player_sym} )")
             break
 
 
