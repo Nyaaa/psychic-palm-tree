@@ -4,14 +4,16 @@ import numpy as np
 import random
 
 
-spaces = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+init = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+spaces = init.copy()
 score = {
     "playerX": [],
     "playerO": []
 }
 total_score = {
     "playerX": 0,
-    "playerO": 0
+    "playerO": 0,
+    "draw": 0
 }
 win_conditions = (
     (1, 2, 3),
@@ -25,17 +27,17 @@ win_conditions = (
 )
 
 
-def board(message=""):
+def board():
     num = np.array(spaces)
     reshaped = num.reshape(3, 3)
     termtables.print(reshaped)
-    print(message)
 
 
 def win_check(player_name):
-    a = set(score[player_name])
+    score_ = set(score[player_name])
     for i in win_conditions:
-        if len(a.intersection(i)) == 3:
+        i = set(i)
+        if len(i.intersection(score_)) == 3:
             return True
 
 
@@ -46,9 +48,23 @@ def player(step):
         return colored("O", "blue", attrs=["bold"]), "playerO"
 
 
+def predict_win(player_name):
+    score_ = set(score[player_name])
+    for i in win_conditions:
+        i = set(i)
+        if len(i.difference(score_)) == 1:
+            res = list(i.difference(score_)).pop()
+            if res in spaces:
+                return res
+
+
 def ai_move():
-    get_moves = [item for item in spaces if isinstance(item, int)]
-    return random.choice(get_moves)
+    if predict_win("playerO"):  # can AI win?
+        return predict_win("playerO")
+    elif predict_win("playerX"):  # can player win?
+        return predict_win("playerX")
+    else:
+        return random.choice([item for item in spaces if isinstance(item, int)])
 
 
 def move(player_name, player_sym, play):
@@ -67,10 +83,10 @@ def again():
         spaces.clear()
         score["playerO"].clear()
         score["playerX"].clear()
-        spaces = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-        return True
+        spaces = init.copy()
+        start()
     else:
-        return False
+        exit(0)
 
 
 def check_input(text):
@@ -90,20 +106,26 @@ def start():
     while True:
         player_sym = player(step)[0]
         player_name = player(step)[1]
-        board(f"Player: ( {player_sym} )")
+        board()
+        print(f"Player: ( {player_sym} )")
 
         if step == 9:
-            board("Game over!")
-            break
+            board()
+            total_score["draw"] += 1
+            print("Draw!")
+            print(player(2)[0], total_score["playerX"], ":", total_score["playerO"], player(1)[0])
+            print("Draw: ", total_score["draw"])
+            again()
 
-        if player_name == "playerO" and mode == 2:
+        if player_name == "playerO" and mode == 1:
             play = ai_move()
         else:
             play = check_input("Enter 1-9 to play, 0 to exit:\n")
 
         if play == 0:
-            board("Game over!")
-            break
+            board()
+            print("Game over!")
+            exit(0)
         else:
             if not move(player_name, player_sym, play):
                 print("Illegal move, select a different space")
@@ -111,13 +133,12 @@ def start():
         step += 1
 
         if win_check(player_name):
-            board(f"Winner: ( {player_sym} )")
+            board()
+            print(f"Winner: ( {player_sym} )")
             total_score[player_name] += 1
             print(player(2)[0], total_score["playerX"], ":", total_score["playerO"], player(1)[0])
-            if again():
-                start()
-            else:
-                exit(0)
+            print("Draw: ", total_score["draw"])
+            again()
 
 
 if __name__ == '__main__':
