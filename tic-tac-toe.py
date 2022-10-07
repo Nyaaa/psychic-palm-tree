@@ -53,7 +53,7 @@ def predict_win(player_name):
     for i in win_conditions:
         i = set(i)
         if len(i.difference(score_)) == 1:
-            res = list(i.difference(score_)).pop()
+            res = i.difference(score_).pop()
             if res in spaces:
                 return res
 
@@ -120,7 +120,7 @@ def start():
         if player_name == "playerO" and mode == 1:
             play = ai_move()
         else:
-            play = check_input("Enter 1-9 to play, 0 to exit:\n")
+            play = check_input("Enter [1-9] to play, [0] to exit:\n")
 
         if play == 0:
             board()
