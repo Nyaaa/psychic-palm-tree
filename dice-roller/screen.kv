@@ -15,63 +15,71 @@
             text:'d4'
             on_press:
                 app.sides = 4
-                print(app.sides)
                 app.root.current = 'second_screen'
         Button:
             text:'d6'
             on_press:
                 app.sides = 6
-                print(app.sides)
                 app.root.current = 'second_screen'
         Button:
             text:'d8'
             on_press:
                 app.sides = 8
-                print(app.sides)
                 app.root.current = 'second_screen'
         Button:
             text:'d10'
             on_press:
                 app.sides = 10
-                print(app.sides)
                 app.root.current = 'second_screen'
         Button:
             text:'d12'
             on_press:
                 app.sides = 12
-                print(app.sides)
                 app.root.current = 'second_screen'
         Button:
             text:'d20'
             on_press:
                 app.sides = 20
-                print(app.sides)
                 app.root.current = 'second_screen'
         Button:
             text:'d100'
             on_press:
                 app.sides = 100
-                print(app.sides)
                 app.root.current = 'second_screen'
 
 <SecondScreen>:
     name: "second_screen"
-    GridLayout:
-        rows: 4
-        cols: 2
-        Label:
-            text: 'Times to roll:'
-        TextInput:
-            id: roll_times
-        Label:
-            text: 'Modifier:'
-        TextInput:
-            id: modifier
-        Button:
-            text: 'Roll'
-            on_press: print('roll')
-        Button:
-            text:'Back'
-            on_press: app.root.current = 'first_screen'
-        Label:
-            text: format(app.sides)
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            orientation: 'horizontal'
+            Label:
+                text: 'Times to roll:'
+            TextInput:
+                id: roll_times
+                multiline: False
+                input_filter: "int"
+        BoxLayout:
+            orientation: 'horizontal'
+            Label:
+                text: 'Modifier:'
+            TextInput:
+                id: modifier
+                multiline: False
+                input_filter: "int"
+        BoxLayout:
+            orientation: 'horizontal'
+            Button:
+                text: 'Roll'
+                on_press: root.roll(app.sides)
+            Button:
+                text:'Back'
+                on_press: app.root.current = 'first_screen'
+        BoxLayout:
+            orientation: 'horizontal'
+            ScrollView:
+                do_scroll_x: False
+                do_scroll_y: True
+                Label:
+                    id: output
+                    text: ''
