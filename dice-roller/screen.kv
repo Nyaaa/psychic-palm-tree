@@ -1,85 +1,58 @@
-#:import WipeTransition kivy.uix.screenmanager.WipeTransition
-
 <MainScreen>:
-    transition: WipeTransition()
     id: sm
     FirstScreen:
-    SecondScreen:
 
 <FirstScreen>:
     name: "first_screen"
     GridLayout:
-        rows: 4
+        rows: 5
         cols: 2
+        TextInput:
+            size_hint: (.2, None)
+            height: 30
+            id: roll_times
+            multiline: False
+            input_filter: "int"
+            hint_text: 'Times to roll:'
+        TextInput:
+            size_hint: (.2, None)
+            height: 30
+            id: modifier
+            multiline: False
+            input_filter: "int"
+            hint_text: 'Modifier:'
         Button:
             text:'d4'
             on_press:
                 app.sides = 4
-                app.root.current = 'second_screen'
+                root.roll(app.sides)
         Button:
             text:'d6'
             on_press:
                 app.sides = 6
-                app.root.current = 'second_screen'
+                root.roll(app.sides)
         Button:
             text:'d8'
             on_press:
                 app.sides = 8
-                app.root.current = 'second_screen'
+                root.roll(app.sides)
         Button:
             text:'d10'
             on_press:
                 app.sides = 10
-                app.root.current = 'second_screen'
+                root.roll(app.sides)
         Button:
             text:'d12'
             on_press:
                 app.sides = 12
-                app.root.current = 'second_screen'
+                root.roll(app.sides)
         Button:
             text:'d20'
             on_press:
                 app.sides = 20
-                app.root.current = 'second_screen'
+                root.roll(app.sides)
         Button:
             text:'d100'
             on_press:
                 app.sides = 100
-                app.root.current = 'second_screen'
-
-<SecondScreen>:
-    name: "second_screen"
-    BoxLayout:
-        orientation: 'vertical'
-        BoxLayout:
-            orientation: 'horizontal'
-            Label:
-                text: 'Times to roll:'
-            TextInput:
-                id: roll_times
-                multiline: False
-                input_filter: "int"
-        BoxLayout:
-            orientation: 'horizontal'
-            Label:
-                text: 'Modifier:'
-            TextInput:
-                id: modifier
-                multiline: False
-                input_filter: "int"
-        BoxLayout:
-            orientation: 'horizontal'
-            Button:
-                text: 'Roll'
-                on_press: root.roll(app.sides)
-            Button:
-                text:'Back'
-                on_press: app.root.current = 'first_screen'
-        BoxLayout:
-            orientation: 'horizontal'
-            ScrollView:
-                do_scroll_x: False
-                do_scroll_y: True
-                Label:
-                    id: output
-                    text: ''
+                root.roll(app.sides)
