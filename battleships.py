@@ -5,6 +5,22 @@ import logging
 
 logging.basicConfig(format='|%(levelname)s| %(message)s', level=logging.DEBUG)
 
+
+def print_tables_side_by_side(*tables, spacing=10):
+    string_tables_split = [tabulate(t, tablefmt="pretty", showindex=range(board_size),
+                                    headers=range(board_size)).splitlines() for t in tables]
+    num_lines = max(map(len, string_tables_split))
+
+    for i in range(num_lines):
+        line_each_table = []
+        for table_lines in string_tables_split:
+            line_table_string = table_lines[i]
+            line_each_table.append(line_table_string + (" " * spacing))
+
+        final_line_string = "".join(line_each_table)
+        print(final_line_string)
+
+
 class OutOfBoundsException(Exception):
     pass
 
@@ -74,8 +90,7 @@ class Board:
         self.ship_list = []
         self.no_placement = []
         water = colored("■", "blue")
-        self.sea = [[water] * board_size for columns in range(board_size)]
-        self.header = list(range(board_size))
+        self.sea = [[water] * board_size for _ in range(board_size)]
 
     def add_ship(self, ship):
         for dot in ship.dots:
@@ -99,8 +114,9 @@ class Board:
         if not((0 <= dot.x < board_size) and (0 <= dot.y < board_size)):
             return True
 
-    def __str__(self):
-        return tabulate(self.sea, headers=self.header, showindex="always", tablefmt="pretty")
+    def draw(self):
+        #return tabulate(self.sea, headers=range(1, board_size+1), showindex=range(1, board_size+1), tablefmt="pretty")
+        return self.sea
 
 
 class Game:
@@ -141,10 +157,10 @@ class Game:
         pass
 
     def loop(self):
+        tables = [self.human_player.board.draw(), self.ai_player.board.draw()]
         logging.debug(f"ships: {self.human_player.board.ship_list}")
-        print(self.human_player.board)
         logging.debug(f"ships: {self.ai_player.board.ship_list}")
-        print(self.ai_player.board)
+        print_tables_side_by_side(*tables)
 
     def start(self):
         self.greet()
@@ -152,6 +168,5 @@ class Game:
 
 
 board_size = 6
-board_limit = board_size - 1
 g = Game()
 g.start()
