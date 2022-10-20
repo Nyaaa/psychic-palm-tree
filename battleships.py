@@ -66,7 +66,7 @@ class Player:
 
 
 class AI(Player):
-    def guess_rotation(self):  # TODO cleanup
+    def guess_rotation(self):
         x = []
         y = []
         for i in self.enemy_board.hit:
@@ -75,21 +75,16 @@ class AI(Player):
         x.sort()
         y.sort()
         if len(set(x)) == 1:
-            print("x")
             self.target_choice.append(Dot(x[0], y[0] - 1))  # left
             self.target_choice.append(Dot(x[0], y[-1] + 1))  # right
         elif len(set(y)) == 1:
-            print("y")
             self.target_choice.append(Dot(x[0] - 1, y[0]))  # up
             self.target_choice.append(Dot(x[-1] + 1, y[0]))  # down
 
-
     def ask(self):
-        print("Computer's turn")
         self.target_choice.clear()
 
         if len(self.enemy_board.hit) == 1:
-            print("hit at", self.enemy_board.hit)
             near = [(-1, 0), (0, -1), (0, 1), (1, 0)]
             for x, y in near:
                 dot = Dot(self.enemy_board.hit[0].x + x, self.enemy_board.hit[0].y + y)
@@ -97,14 +92,21 @@ class AI(Player):
         elif len(self.enemy_board.hit) > 1:
             self.guess_rotation()
 
-        if self.target_choice:  # TODO add checks
-            print("near", self.target_choice)
-            target = choice(self.target_choice)
-            self.target_choice.remove(target)
-            return target
-        else:
-            print("random")
-            return Dot(randint(0, board_size - 1), randint(0, board_size - 1))
+        return self.target_choice
+
+    def move(self):
+        print("Computer's turn")
+        while True:
+            try:
+                if self.enemy_board.hit:
+                    target = choice(self.ask())
+                else:
+                    target = Dot(randint(0, board_size - 1), randint(0, board_size - 1))
+
+                repeat = self.enemy_board.shot(target)
+                return repeat
+            except BoardException:
+                pass
 
 
 class User(Player):
@@ -123,6 +125,8 @@ class User(Player):
             except ValueError:
                 print("Enter a number")
                 continue
+            except IndexError:
+                continue
 
 
 class Ship:
@@ -130,31 +134,23 @@ class Ship:
         self.location = location
         self.length = hp
         self.hp = hp
-        if direction == 0:
-            self.direction = "x"
-        else:
-            self.direction = "y"
+        self.direction = direction
 
     @property
     def dots(self):
-        _coordinates = []
+        coordinates = []
         for i in range(self.length):
-            _x = self.location.x
-            _y = self.location.y
-            if self.direction == "x":
-                _x += i
-            elif self.direction == "y":
-                _y += i
-            _coordinates.append(Dot(_x, _y))
-        return _coordinates
+            x = self.location.x
+            y = self.location.y
+            if self.direction == 0:
+                x += i
+            elif self.direction == 1:
+                y += i
+            coordinates.append(Dot(x, y))
+        return coordinates
 
     def __repr__(self):
         return f"{self.dots}"
-
-
-def boundary_check(dot):
-    if not((0 <= dot.x < board_size) and (0 <= dot.y < board_size)):
-        return True
 
 
 class Board:
@@ -171,7 +167,7 @@ class Board:
 
     def add_ship(self, ship):
         for dot in ship.dots:
-            if boundary_check(dot) or dot in self.no_placement:
+            if self.boundary_check(dot) or dot in self.no_placement:
                 raise OutOfBoundsException()
         for dot in ship.dots:
             self.sea[dot.x][dot.y] = self.char_ship
@@ -184,38 +180,43 @@ class Board:
             self.no_placement.append(dot)
             for x, y in surround:
                 test = Dot(dot.x + x, dot.y + y)
-                if not boundary_check(test) and test not in self.no_placement:
+                if not self.boundary_check(test) and test not in self.no_placement:
                     if show:
                         self.sea[test.x][test.y] = "•"
                     self.no_placement.append(test)
 
     def shot(self, target):
-        print(f"Shooting at {target.x + 1, target.y + 1}:")
-
-        if boundary_check(target):
+        if self.boundary_check(target):
             raise OutOfBoundsException()
         elif target in self.no_placement:
             raise IllegalMoveException()
 
+        print(f"🎯 Shooting at {target.x + 1, target.y + 1}:")
         self.no_placement.append(target)
         for ship in self.ship_list:
             if target in ship.dots:
                 ship.hp -= 1
                 if ship.hp == 0:
-                    print("Ship destroyed!")
+                    print("☠ Ship destroyed!")
                     for dot in ship.dots:
                         self.sea[dot.x][dot.y] = self.char_sunk
                         self.contour(ship, show=True)
-                    self.hit.clear()  # TODO potential bug if 2 ships hit
+                    self.hit.clear()
                     self.ship_list.remove(ship)
                 else:
-                    print("Ship hit!")
+                    print("💥 Ship hit!")
                     self.hit.append(target)
                     self.sea[target.x][target.y] = self.char_hit
                 return True
-        print("Missed!")
+        print("🌫️ Missed!")
         self.sea[target.x][target.y] = "•"
         return False
+
+    @staticmethod
+    def boundary_check(dot):
+        """Returns True if dot is not on the board"""
+        if not ((0 <= dot.x < board_size) and (0 <= dot.y < board_size)):
+            return True
 
     def draw(self):
         if self.hide:
@@ -242,6 +243,8 @@ class Game:
     @staticmethod
     def random_board_create():
         ship_types = [3, 2, 2, 1, 1, 1, 1]
+        #ship_types = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+        #ship_types = [3, 3, 3, 3, 3, 3, 3]
         board = Board()
         attempt = 0
         for s in ship_types:
@@ -260,27 +263,49 @@ class Game:
         board.no_placement.clear()
         return board
 
-    def greet(self):
-        pass
+    @staticmethod
+    def greet():
+        print(r"""⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀       ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣸⣇⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀       ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣸⣇⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀       ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⢹⡏⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀       ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⢾⡟⠛⠛⠛⠛⢻⡷⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀       ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⣤⡴⠟⣿⣦⣤⣷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀       ⠀⠀⠀⠀⠀⠀⠀⠀⢰⡟⠋⢿⡷⠀⣿⡇⠈⣿⣿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀       ⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⠀⠀⠀⠀⣿⣿⣿⣿⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀       ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⡀⠀⠀⠀⣿⣿⣿⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀       ⠀⠀⠀⠀⣀⣀⣀⣀⣠⣼⣧⣤⣤⣤⣿⣿⣿⣿⣧⣤⣤⣤⣀⣀⣀⣤⠀⠀⠀
+⠀       ⠀⠘⠛⠛⠛⠉⠉⠉⠉⠙⠛⠛⠷⠶⢶⣦⣤⣤⣤⣴⡶⠿⠟⠛⠋⠁⠀⠀⠀
+⠀       ⠀⠀⠀⠀⠛⠛⠛⠛⠻⠷⠶⠶⣶⣤⣤⣤⣤⣤⣤⣤⣤⣤⡶⠶⠶⠀⠀⠀⠀
+⠀       ⢠⡶⠶⠶⠿⠛⠛⠻⠷⠶⢶⣤⣤⣤⣤⣤⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀ _           _   _   _           _     _           
+| |         | | | | | |         | |   (_)          
+| |__   __ _| |_| |_| | ___  ___| |__  _ _ __  ___ 
+| '_ \ / _` | __| __| |/ _ \/ __| '_ \| | '_ \/ __|
+| |_) | (_| | |_| |_| |  __/\__ \ | | | | |_) \__ \
+|_.__/ \__,_|\__|\__|_|\___||___/_| |_|_| .__/|___/
+                                        | |        
+                                        |_|  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀""")
 
     def loop(self):
         step = 0
         tables = [self.human_player.board.draw(), self.ai_player.board.draw()]
         logging.debug(f"Player ships: {self.human_player.board.ship_list}")
+        logging.debug(f"AI ships: {self.ai_player.board.ship_list}")
 
         while True:
             if len(self.ai_player.board.ship_list) == 0:
                 print_tables_side_by_side(*tables)
-                print("You win!")
+                print("🏆 You win!")
                 exit(0)
             elif len(self.human_player.board.ship_list) == 0:
                 print_tables_side_by_side(*tables)
-                print("You lose!")
+                print("💢 You lose!")
                 exit(0)
 
             if step % 2 == 0:
                 print_tables_side_by_side(*tables)
-                logging.debug(f"AI ships: {self.ai_player.board.ship_list}")
                 logging.info(f"AI ships: {len(self.ai_player.board.ship_list)}")
                 logging.info(f"Player ships: {len(self.human_player.board.ship_list)}")
                 repeat = self.human_player.move()
@@ -288,16 +313,18 @@ class Game:
                 repeat = self.ai_player.move()
 
             if repeat:
-                print("Shoot again")
+                print("⏩ Shoot again")
                 continue
             else:
                 step += 1
+                print("=" * 10, f"Round {step}", "=" * 10)
 
     def start(self):
         self.greet()
         self.loop()
 
 
-board_size = 6
-g = Game()
-g.start()
+if __name__ == '__main__':
+    board_size = 6
+    g = Game()
+    g.start()
