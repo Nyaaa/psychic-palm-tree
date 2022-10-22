@@ -3,7 +3,7 @@ from termcolor import colored
 from random import randint, choice
 import logging
 
-logging.basicConfig(format='|%(levelname)s| %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='|%(levelname)s| %(message)s', level=logging.ERROR)
 
 
 def print_tables_side_by_side(*tables, spacing=10):
@@ -14,8 +14,7 @@ def print_tables_side_by_side(*tables, spacing=10):
     for i in range(num_lines):
         line_each_table = []
         for table_lines in string_tables_split:
-            line_table_string = table_lines[i]
-            line_each_table.append(line_table_string + (" " * spacing))
+            line_each_table.append(table_lines[i] + (" " * spacing))
 
         final_line_string = "".join(line_each_table)
         print(final_line_string)
@@ -32,7 +31,7 @@ class OutOfBoundsException(BoardException):
 
 class IllegalMoveException(BoardException):
     def __str__(self):
-        return "Target not allowed"
+        return "Cell is already uncovered"
 
 
 class Dot:
@@ -51,7 +50,6 @@ class Player:
     def __init__(self, board1, board2):
         self.board = board1
         self.enemy_board = board2
-        self.target_choice = []
 
     def ask(self):
         raise NotImplementedError()
@@ -67,7 +65,7 @@ class Player:
 
 class AI(Player):
     def ask(self):
-        self.target_choice.clear()
+        target_choice = []
         x = []
         y = []
 
@@ -80,16 +78,15 @@ class AI(Player):
         if len(set(x)) == 1 and len(set(y)) == 1:  # One hit
             near = [(-1, 0), (0, -1), (0, 1), (1, 0)]
             for x1, y1 in near:
-                self.target_choice.append(Dot(x[0] + x1, y[0] + y1))
+                target_choice.append(Dot(x[0] + x1, y[0] + y1))
         elif len(set(x)) == 1:  # common X axis
-            self.target_choice.append(Dot(x[0], y[0] - 1))  # left
-            self.target_choice.append(Dot(x[0], y[-1] + 1))  # right
+            target_choice.append(Dot(x[0], y[0] - 1))  # left
+            target_choice.append(Dot(x[0], y[-1] + 1))  # right
         elif len(set(y)) == 1:  # common Y axis
-            self.target_choice.append(Dot(x[0] - 1, y[0]))  # up
-            self.target_choice.append(Dot(x[-1] + 1, y[0]))  # down
+            target_choice.append(Dot(x[0] - 1, y[0]))  # up
+            target_choice.append(Dot(x[-1] + 1, y[0]))  # down
 
-        print(self.target_choice)
-        return self.target_choice
+        return target_choice
 
     def move(self):
         print("Computer's turn")
@@ -240,10 +237,12 @@ class Game:
     @staticmethod
     def random_board_create():
         ship_types = [3, 2, 2, 1, 1, 1, 1]
-        #ship_types = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
-        #ship_types = [3, 3, 3, 3, 3, 3, 3]
+        if board_size > 7:
+            ship_types = [5, 4, 3, 3, 2]
+
         board = Board()
         attempt = 0
+
         for s in ship_types:
             while True:
                 attempt += 1
@@ -286,7 +285,7 @@ class Game:
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀""")
 
     def loop(self):
-        step = 0
+        step = 1
         tables = [self.human_player.board.draw(), self.ai_player.board.draw()]
         logging.debug(f"Player ships: {self.human_player.board.ship_list}")
         logging.debug(f"AI ships: {self.ai_player.board.ship_list}")
@@ -301,7 +300,7 @@ class Game:
                 print("💢 You lose!")
                 exit(0)
 
-            if step % 2 == 0:
+            if step % 2 == 1:
                 print_tables_side_by_side(*tables)
                 logging.info(f"AI ships: {len(self.ai_player.board.ship_list)}")
                 logging.info(f"Player ships: {len(self.human_player.board.ship_list)}")
