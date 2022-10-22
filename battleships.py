@@ -66,32 +66,29 @@ class Player:
 
 
 class AI(Player):
-    def guess_rotation(self):
+    def ask(self):
+        self.target_choice.clear()
         x = []
         y = []
+
         for i in self.enemy_board.hit:
             x.append(i.x)
             y.append(i.y)
         x.sort()
         y.sort()
-        if len(set(x)) == 1:
+
+        if len(set(x)) == 1 and len(set(y)) == 1:  # One hit
+            near = [(-1, 0), (0, -1), (0, 1), (1, 0)]
+            for x1, y1 in near:
+                self.target_choice.append(Dot(x[0] + x1, y[0] + y1))
+        elif len(set(x)) == 1:  # common X axis
             self.target_choice.append(Dot(x[0], y[0] - 1))  # left
             self.target_choice.append(Dot(x[0], y[-1] + 1))  # right
-        elif len(set(y)) == 1:
+        elif len(set(y)) == 1:  # common Y axis
             self.target_choice.append(Dot(x[0] - 1, y[0]))  # up
             self.target_choice.append(Dot(x[-1] + 1, y[0]))  # down
 
-    def ask(self):
-        self.target_choice.clear()
-
-        if len(self.enemy_board.hit) == 1:
-            near = [(-1, 0), (0, -1), (0, 1), (1, 0)]
-            for x, y in near:
-                dot = Dot(self.enemy_board.hit[0].x + x, self.enemy_board.hit[0].y + y)
-                self.target_choice.append(dot)
-        elif len(self.enemy_board.hit) > 1:
-            self.guess_rotation()
-
+        print(self.target_choice)
         return self.target_choice
 
     def move(self):
@@ -105,8 +102,8 @@ class AI(Player):
 
                 repeat = self.enemy_board.shot(target)
                 return repeat
-            except BoardException:
-                pass
+            except BoardException as e:
+                logging.debug(e)
 
 
 class User(Player):
