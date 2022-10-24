@@ -76,8 +76,7 @@ class AI(Player):
         y.sort()
 
         if len(set(x)) == 1 and len(set(y)) == 1:  # One hit
-            near = [(-1, 0), (0, -1), (0, 1), (1, 0)]
-            for x1, y1 in near:
+            for x1, y1 in [(-1, 0), (0, -1), (0, 1), (1, 0)]:
                 target_choice.append(Dot(x[0] + x1, y[0] + y1))
         elif len(set(x)) == 1:  # common X axis
             target_choice.append(Dot(x[0], y[0] - 1))  # left
@@ -238,7 +237,7 @@ class Game:
     def random_board_create():
         ship_types = [3, 2, 2, 1, 1, 1, 1]
         if board_size > 7:
-            ship_types = [5, 4, 3, 3, 2]
+            ship_types = [5, 4, 3, 3, 2, 2]
 
         board = Board()
         attempt = 0
@@ -321,6 +320,6 @@ class Game:
 
 
 if __name__ == '__main__':
-    board_size = 6
+    board_size = 9
     g = Game()
     g.start()
