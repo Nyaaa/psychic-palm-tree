@@ -1,6 +1,7 @@
 from tabulate import tabulate
 from termcolor import colored
 from random import randint, choice
+from dataclasses import dataclass, field
 import logging
 
 logging.basicConfig(format='|%(levelname)s| %(message)s', level=logging.ERROR)
@@ -34,16 +35,29 @@ class IllegalMoveException(BoardException):
         return "Cell is already uncovered"
 
 
+@dataclass(frozen=True)
 class Dot:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    x: int
+    y: int
 
-    def __eq__(self, compare):
-        return self.x == compare.x and self.y == compare.y
 
-    def __repr__(self):
-        return f"({self.x}, {self.y})"
+@dataclass
+class Ship:
+    location: Dot
+    hp: int
+    direction: int
+    dots: list[Dot] = field(init=False, repr=True)
+
+    def __post_init__(self):
+        self.dots = []
+        for i in range(self.hp):
+            x = self.location.x
+            y = self.location.y
+            if self.direction == 0:
+                x += i
+            elif self.direction == 1:
+                y += i
+            self.dots.append(Dot(x, y))
 
 
 class Player:
@@ -120,30 +134,6 @@ class User(Player):
                 continue
             except IndexError:
                 continue
-
-
-class Ship:
-    def __init__(self, location, hp, direction):
-        self.location = location
-        self.length = hp
-        self.hp = hp
-        self.direction = direction
-
-    @property
-    def dots(self):
-        coordinates = []
-        for i in range(self.length):
-            x = self.location.x
-            y = self.location.y
-            if self.direction == 0:
-                x += i
-            elif self.direction == 1:
-                y += i
-            coordinates.append(Dot(x, y))
-        return coordinates
-
-    def __repr__(self):
-        return f"{self.dots}"
 
 
 class Board:
