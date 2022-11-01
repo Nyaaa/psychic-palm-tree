@@ -1,11 +1,26 @@
 import heapq
+from functools import wraps
+import time
 
 
+def timeit(func):
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        start_time = time.perf_counter_ns()
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter_ns()
+        total_time = end_time - start_time
+        print(f'Function {func.__name__} took {total_time} ns')
+        return result
+    return timeit_wrapper
+
+
+@timeit
 def dijkstra(graph: dict, start, stop):
     """Basic Dijkstra"""
     distances = {vertex: float('infinity') for vertex in graph}
     traversed = {vertex: False for vertex in graph}
-    backtrack = {vertex: None for vertex in graph}
+    parents = {vertex: None for vertex in graph}
     distances[start] = 0
     pointer = stop
     path = []
@@ -16,22 +31,26 @@ def dijkstra(graph: dict, start, stop):
         for vertex in graph[shortest].keys():
             if distances[vertex] > distances[shortest] + graph[shortest][vertex]:
                 distances[vertex] = distances[shortest] + graph[shortest][vertex]
-                backtrack[vertex] = shortest
+                parents[vertex] = shortest
         traversed[shortest] = True
 
     while pointer is not None:
         path.append(pointer)
-        pointer = backtrack[pointer]
+        pointer = parents[pointer]
 
-    print(distances)
+    # print(distances)
     path.reverse()
     return path
 
 
-def dijkstra_pq(graph: dict, start):
+@timeit
+def dijkstra_queue(graph: dict, start, stop):
     """Dijkstra with priority queue"""
     distances = {vertex: float('infinity') for vertex in graph}
     distances[start] = 0
+    parents = {vertex: None for vertex in graph}
+    pointer = stop
+    path = []
 
     priority_queue = [(0, start)]
     while len(priority_queue) > 0:
@@ -46,5 +65,65 @@ def dijkstra_pq(graph: dict, start):
             if distance < distances[neighbour]:
                 distances[neighbour] = distance
                 heapq.heappush(priority_queue, (distance, neighbour))
+                parents[neighbour] = current_vertex
 
-    return distances
+    while pointer is not None:
+        path.append(pointer)
+        pointer = parents[pointer]
+
+    # print(distances)
+    path.reverse()
+    return path
+
+
+@timeit
+def a_star(graph, start_node, stop_node):
+    """A*"""
+    open_list = {start_node}
+    closed_list = set([])
+    distances = {start_node: 0}
+    parents = {start_node: start_node}
+    heuristics = {vertex: 1 for vertex in graph}
+
+    while len(open_list) > 0:
+        n = None
+
+        for vertex in open_list:
+            if n is None or distances[vertex] + heuristics[vertex] < distances[n] + heuristics[n]:
+                n = vertex
+
+        if n is None:
+            print('Path does not exist!')
+            return None
+
+        if n == stop_node:
+            path = []
+
+            while parents[n] != n:
+                path.append(n)
+                n = parents[n]
+
+            path.append(start_node)
+            path.reverse()
+            # print(distances)
+            return path
+
+        for m, weight in graph[n].items():
+            if m not in open_list and m not in closed_list:
+                open_list.add(m)
+                parents[m] = n
+                distances[m] = distances[n] + weight
+            else:
+                if distances[m] > distances[n] + weight:
+                    distances[m] = distances[n] + weight
+                    parents[m] = n
+
+                    if m in closed_list:
+                        closed_list.remove(m)
+                        open_list.add(m)
+
+        open_list.remove(n)
+        closed_list.add(n)
+
+    print('Path does not exist!')
+    return None
