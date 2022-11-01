@@ -9,4 +9,4 @@ test = {'A': {'B': 2, 'C': 5},
 
 print(search.dijkstra(test, "A", "D"))
 print(search.dijkstra_queue(test, "A", "D"))
-print(search.a_star(test, 'A', 'D', ))
+print(search.a_star(test, 'A', 'D'))

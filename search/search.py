@@ -77,12 +77,12 @@ def dijkstra_queue(graph: dict, start, stop):
 
 
 @timeit
-def a_star(graph, start_node, stop_node):
+def a_star(graph, start, stop):
     """A*"""
-    open_list = {start_node}
-    closed_list = set([])
-    distances = {start_node: 0}
-    parents = {start_node: start_node}
+    open_list = set(start)
+    closed_list = set()
+    distances = {start: 0}
+    parents = {start: start}
     heuristics = {vertex: 1 for vertex in graph}
 
     while len(open_list) > 0:
@@ -96,14 +96,14 @@ def a_star(graph, start_node, stop_node):
             print('Path does not exist!')
             return None
 
-        if n == stop_node:
+        if n == stop:
             path = []
 
             while parents[n] != n:
                 path.append(n)
                 n = parents[n]
 
-            path.append(start_node)
+            path.append(start)
             path.reverse()
             # print(distances)
             return path
