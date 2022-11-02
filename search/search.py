@@ -1,22 +1,15 @@
 import heapq
-from functools import wraps
-import time
 
 
-def timeit(func):
-    @wraps(func)
-    def timeit_wrapper(*args, **kwargs):
-        start_time = time.perf_counter_ns()
-        result = func(*args, **kwargs)
-        end_time = time.perf_counter_ns()
-        total_time = end_time - start_time
-        print(f'Function {func.__name__} took {total_time} ns')
-        return result
-    return timeit_wrapper
+class PathNotFound(BaseException):
+    """Raised when a path cannot be calculated."""
 
 
-@timeit
-def dijkstra(graph: dict, start, stop):
+class VertexNotFound(PathNotFound):
+    """Raised when a given vertex is not a part of a given graph."""
+
+
+def dijkstra(graph: dict, start: str, stop: str) -> list:
     """Basic Dijkstra"""
     distances = {vertex: float('infinity') for vertex in graph}
     traversed = {vertex: False for vertex in graph}
@@ -24,6 +17,11 @@ def dijkstra(graph: dict, start, stop):
     distances[start] = 0
     pointer = stop
     path = []
+
+    if start not in graph:
+        raise VertexNotFound(start)
+    elif stop not in graph:
+        raise VertexNotFound(stop)
 
     for _ in range(len(distances)):
         shortest = min([k for k in traversed.keys() if not traversed[k]], key=lambda x: distances[x])
@@ -38,12 +36,14 @@ def dijkstra(graph: dict, start, stop):
         path.append(pointer)
         pointer = parents[pointer]
 
+    if distances[stop] == float('infinity'):
+        raise PathNotFound(stop)
+
     # print(distances)
     path.reverse()
     return path
 
 
-@timeit
 def dijkstra_queue(graph: dict, start, stop):
     """Dijkstra with priority queue"""
     distances = {vertex: float('infinity') for vertex in graph}
@@ -51,6 +51,11 @@ def dijkstra_queue(graph: dict, start, stop):
     parents = {vertex: None for vertex in graph}
     pointer = stop
     path = []
+
+    if start not in graph:
+        raise VertexNotFound(start)
+    elif stop not in graph:
+        raise VertexNotFound(stop)
 
     priority_queue = [(0, start)]
     while len(priority_queue) > 0:
@@ -71,12 +76,14 @@ def dijkstra_queue(graph: dict, start, stop):
         path.append(pointer)
         pointer = parents[pointer]
 
+    if distances[stop] == float('infinity'):
+        raise PathNotFound(stop)
+
     # print(distances)
     path.reverse()
     return path
 
 
-@timeit
 def a_star(graph, start, stop):
     """A*"""
     open_list = set(start)
@@ -85,16 +92,17 @@ def a_star(graph, start, stop):
     parents = {start: start}
     heuristics = {vertex: 1 for vertex in graph}
 
+    if start not in graph:
+        raise VertexNotFound(start)
+    elif stop not in graph:
+        raise VertexNotFound(stop)
+
     while len(open_list) > 0:
         n = None
 
         for vertex in open_list:
             if n is None or distances[vertex] + heuristics[vertex] < distances[n] + heuristics[n]:
                 n = vertex
-
-        if n is None:
-            print('Path does not exist!')
-            return None
 
         if n == stop:
             path = []
@@ -125,5 +133,4 @@ def a_star(graph, start, stop):
         open_list.remove(n)
         closed_list.add(n)
 
-    print('Path does not exist!')
-    return None
+    raise PathNotFound(stop)
