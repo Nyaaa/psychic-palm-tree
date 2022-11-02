@@ -90,7 +90,12 @@ def a_star(graph, start, stop):
     closed_list = set()
     distances = {start: 0}
     parents = {start: start}
-    heuristics = {vertex: 1 for vertex in graph}
+    heuristics = {vertex: 1 for vertex in graph}  # not implemented
+
+    if start not in graph:
+        raise VertexNotFound(start)
+    elif stop not in graph:
+        raise VertexNotFound(stop)
 
     if start not in graph:
         raise VertexNotFound(start)
