@@ -97,11 +97,6 @@ def a_star(graph, start, stop):
     elif stop not in graph:
         raise VertexNotFound(stop)
 
-    if start not in graph:
-        raise VertexNotFound(start)
-    elif stop not in graph:
-        raise VertexNotFound(stop)
-
     while len(open_list) > 0:
         n = None
 
