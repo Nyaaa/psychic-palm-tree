@@ -1,7 +1,7 @@
 import heapq
 
 
-class PathNotFound(BaseException):
+class PathNotFound(Exception):
     """Raised when a path cannot be calculated."""
 
 
